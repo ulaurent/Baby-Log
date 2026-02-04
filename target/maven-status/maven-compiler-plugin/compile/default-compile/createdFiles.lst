@@ -1,3 +1,4 @@
 com/example/babylog/controller/BabyController.class
 com/example/babylog/BabyLogApplication.class
+com/example/babylog/repository/BabyRepository.class
 com/example/babylog/model/Baby.class
