@@ -1,34 +1,52 @@
 package com.example.babylog.controller;
 
 import com.example.babylog.model.Baby;
+import com.example.babylog.repository.BabyRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/v1/babies")
 public class BabyController {
 
-    private final Map<String, Baby> babyProfiles = new HashMap<>();
+    @Autowired
+    private BabyRepository babyRepository;
 
     @PostMapping
     public ResponseEntity<Baby> createBabyProfile(@RequestBody Baby baby) {
-        String babyId = UUID.randomUUID().toString();
-        baby.setId(babyId);
-        babyProfiles.put(babyId, baby);
-        return ResponseEntity.status(HttpStatus.CREATED).body(baby);
+        Baby savedBaby = babyRepository.save(baby);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedBaby);
+    }
+
+    @GetMapping("/{babyId}")
+    public ResponseEntity<Baby> getBabyProfile(@PathVariable String babyId) {
+        return babyRepository.findById(babyId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @PostMapping("/{babyId}/events")
-    public ResponseEntity<String> addEvents(@PathVariable String babyId, @RequestBody Map<String, Object> events) {
-        if (!babyProfiles.containsKey(babyId)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Baby profile not found");
-        }
-        // Logic to handle events can be added here
-        return ResponseEntity.status(HttpStatus.CREATED).body("Events added for baby: " + babyId);
+    public ResponseEntity<String> addEvents(@PathVariable String babyId, @RequestBody List<String> events) {
+        return babyRepository.findById(babyId).map(baby -> {
+            if (baby.getEvents() == null) {
+                baby.setEvents(new ArrayList<>());
+            }
+            baby.getEvents().addAll(events);
+            babyRepository.save(baby);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Events added for baby: " + babyId);
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Baby profile not found"));
+    }
+
+    @GetMapping("/{babyId}/events")
+    public ResponseEntity<List<String>> getEvents(@PathVariable String babyId) {
+        return babyRepository.findById(babyId)
+                .map(baby -> ResponseEntity.ok(baby.getEvents()))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 }
