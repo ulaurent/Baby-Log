@@ -1,11 +1,12 @@
-# Use Amazon Corretto 17 JDK Alpine as the base image
-FROM amazoncorretto:17-alpine
-
-# Set the working directory inside the container
+# Build stage
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn -q -DskipTests package
 
-# Copy the built JAR file into the container (version-agnostic)
-COPY target/babylog-*.jar app.jar
-
-# Specify the command to run the application
+# Runtime stage
+FROM amazoncorretto:17-alpine
+WORKDIR /app
+COPY --from=build /app/target/babylog-*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
