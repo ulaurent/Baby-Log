@@ -50,4 +50,12 @@ public class BabyController {
                 .map(baby -> ResponseEntity.ok(baby.getEvents()))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
+
+    @DeleteMapping("/{babyId}")
+    public ResponseEntity<Void> deleteBabyProfile(@PathVariable String babyId) {
+        return babyRepository.findById(babyId).map(baby -> {
+            babyRepository.delete(baby);
+            return ResponseEntity.noContent().<Void>build();
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
 }
